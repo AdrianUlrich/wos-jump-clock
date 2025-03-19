@@ -1,8 +1,15 @@
 
 def to_minutes(duration: str):
+    duration = duration.replace('D', 'd')
+    duration = duration.replace('H', 'h')
+    duration = duration.replace('M', 'm')
+    duration = duration.replace('S', 's')
     days, _, duration = duration.strip().rpartition('d')
     hours, _, duration = duration.strip().rpartition('h')
-    minutes, _, _ = duration.strip().rpartition('m')
+    minutes, _, duration = duration.strip().rpartition('m')
+    seconds, _, _ = duration.strip().rpartition('s')
+    if seconds:  # can't be an int
+        return float(days or '0') * 24 * 60 + float(hours or '0') * 60 + float(minutes or '0') + float(seconds) / 60
     return int(days or '0') * 24 * 60 + int(hours or '0') * 60 + int(minutes or '0')
 
 def from_minutes(minutes: int):

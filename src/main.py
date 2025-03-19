@@ -8,6 +8,7 @@ import pandas as pd
 from src.data import validate_data
 from src.data.constants import *
 from src.data.dependencies import depends_on
+from upgrade_table import UpgradeTable
 
 # Types
 UPGRADE = tuple[str, int]
@@ -37,6 +38,7 @@ class WosJumpClock:
         # calculation state
         self.done: set[UPGRADE] = set()
         self.ordered_todo: list[UPGRADE] = []
+        self.status: dict[UPGRADE, str] = {}
         
         # GUI
         self.root.title("WOS Jump Clock")
@@ -71,6 +73,9 @@ class WosJumpClock:
         self.log_label = tk.Label(self.root, text='Log:')
         self.log_text = tk.Text(self.root, height=1)
         self.log_text.config(state=tk.DISABLED)  # make it read-only
+        
+        # Table frame
+        self.table_frame = UpgradeTable(self)
         
         # LAYOUT (grid)
         nrows = 0
@@ -125,12 +130,18 @@ class WosJumpClock:
         nrows += max(len(self.building_labels), len(self.resources))
         
         # one separator row
-        self.separator = ttk.Separator(self.root, orient='horizontal')
-        self.separator.grid(row=nrows, column=0, columnspan=7, sticky='ew')
-        
+        ttk.Separator(self.root, orient='horizontal').grid(row=nrows, column=0, columnspan=7, sticky='ew')
         nrows += 1
+        
         self.log_label.grid(row=nrows, column=0, sticky='e')
         self.log_text.grid(row=nrows, column=1, columnspan=6, sticky='ew')
+        nrows += 1
+        
+        ttk.Separator(self.root, orient='horizontal').grid(row=nrows, column=0, columnspan=7, sticky='ew')
+        nrows += 1
+        
+        # Table layout
+        self.table_frame.grid(row=nrows, column=0, columnspan=7, sticky='ew')
         
         # BINDINGS
         self.root.bind("<Escape>", self._exit)
@@ -156,6 +167,9 @@ class WosJumpClock:
         
         for bonus, entry in self.bonuses.items():
             data[bonus] = entry.get()
+        
+        data['todo'] = self.ordered_todo
+        data['status'] = [[building, level, status] for (building, level), status in self.status.items()]
         
         # save to json file
         with open(SAVEFILE, 'w') as f:
@@ -198,6 +212,10 @@ class WosJumpClock:
                 entry.insert(0, data[bonus])
             else:
                 entry.set(data[bonus])
+        
+        self.ordered_todo = data.get('todo', [])
+        self.status = {(building, level): status
+                       for building, level, status in data.get('status', [])}
         
         # load the csv archive, or create it if it doesn't exist
         try:
@@ -280,6 +298,7 @@ class WosJumpClock:
         Clean already prepared the ordered_todo list, so here we take care of costs.
         """
         self._clean()
+        self.table_frame.update_table()
     
     def _update_all_current_levels(self, *_):
         current_level = self.current_level_var.get()
@@ -293,6 +312,35 @@ class WosJumpClock:
     
     def _exit(self, _):
         self.root.quit()
+    
+    @property
+    def construction_speed(self):
+        """
+        The construction speed bonus, as a decimal. This value is usually bigger than 1.
+        An input of 50% would be 1.5 speed, meaning a factor of 2/3
+        """
+        return 1 / (1 + (float(self.bonuses[CONSTRUCTION_SPEED].get().rstrip('%')) / 100))
+    
+    @property
+    def zinman_skill(self):
+        """
+        Zinman's skill also modifies the duration of the upgrade, but it is already counted in the construction speed.
+        This is the resource cost reduction.
+        12% would be 0.88, changing a 1M meat cost to 880k meat.
+        """
+        return 1 - (float(self.bonuses[ZINMAN_SKILL].get()) / 100)
+    
+    @property
+    def bonus_speed(self):
+        """
+        As opposed to construction_speed, bonuses directly modify the duration of the upgrade.
+        So a bonus of 20% would be 0.8
+        Two such bonuses would be 0.8 * 0.8 = 0.64
+        """
+        double_time = 1 - (float(self.bonuses[DOUBLE_TIME].get().rstrip('%')) / 100)
+        hyena_skill = 1 - (float(self.bonuses[HYENA_SKILL].get().rstrip('%')) / 100)
+        castle_buffs = 1 - (float(self.bonuses[CASTLE_BUFFS].get().rstrip('%')) / 100)
+        return double_time * hyena_skill * castle_buffs
 
 
 def main():
