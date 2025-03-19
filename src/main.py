@@ -8,6 +8,7 @@ import pandas as pd
 from src.data import validate_data
 from src.data.constants import *
 from src.data.dependencies import depends_on
+from src.unit_conversions import to_units
 from upgrade_table import UpgradeTable
 
 # Types
@@ -341,6 +342,22 @@ class WosJumpClock:
         hyena_skill = 1 - (float(self.bonuses[HYENA_SKILL].get().rstrip('%')) / 100)
         castle_buffs = 1 - (float(self.bonuses[CASTLE_BUFFS].get().rstrip('%')) / 100)
         return double_time * hyena_skill * castle_buffs
+    
+    @property
+    def resources_dict(self):
+        """
+        The resources needed for the upgrade.
+        """
+        meat = to_units(self.resources['Meat'].get())
+        wood = to_units(self.resources['Wood'].get())
+        coal = to_units(self.resources['Coal'].get())
+        iron = to_units(self.resources['Iron'].get())
+        crystal = to_units(self.resources['Crystal'].get())
+        rfc = to_units(self.resources['RFC'].get())
+        speedups = int(self.resources['Construction Speedups (min)'].get())
+        speedups += int(self.resources['General Speedups (min)'].get())
+        return {'Meat': meat, 'Wood': wood, 'Coal': coal, 'Iron': iron, 'Crystal': crystal, 'RFC': rfc,
+                'Speedups': speedups}
 
 
 def main():

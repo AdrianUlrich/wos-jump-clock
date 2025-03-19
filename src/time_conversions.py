@@ -1,3 +1,5 @@
+from math import ceil
+
 
 def to_minutes(duration: str):
     duration = duration.replace('D', 'd')
@@ -13,6 +15,8 @@ def to_minutes(duration: str):
     return int(days or '0') * 24 * 60 + int(hours or '0') * 60 + int(minutes or '0')
 
 def from_minutes(minutes: int):
+    if isinstance(minutes, float):
+        minutes = ceil(minutes)
     days, minutes = divmod(minutes, 24 * 60)
     hours, minutes = divmod(minutes, 60)
     parts = [f'{days}d' if days else '', f'{hours}h' if hours else '', f'{minutes}m' if minutes else '']
