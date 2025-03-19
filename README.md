@@ -19,7 +19,7 @@ pip install wos-jump-clock
 
 # Usage
 
-To use the package, execute:
+To use the package, execute: (WIP)
 
 ```bash
 python -m wos-jump-clock
