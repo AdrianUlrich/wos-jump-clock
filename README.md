@@ -9,21 +9,9 @@ Allows user input for upgrade status and remaining time.
 Calculates and displays total resources and duration required.
 Provides a scrollable table for easy navigation.
 
-# Installation
-
-To install the package, use:
-
-```bash
-pip install wos-jump-clock
-```
-
 # Usage
 
-To use the package, execute: (WIP)
-
-```bash
-python -m wos-jump-clock
-```
+To use the package, clone the repository and run the src/main.py file.
 
 # Requirements
 
